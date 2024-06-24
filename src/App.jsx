@@ -523,10 +523,28 @@ Chart.register(
 const SessionHistory = () => {
   const [sessions, setSessions] = useState([]);
 
+  function getQueryParams() {
+    const params = {};
+    const queryString = window.location.search.substring(1);
+    const pairs = queryString.split("&");
+
+    pairs.forEach((pair) => {
+      const [key, value] = pair.split("=");
+      params[decodeURIComponent(key)] = decodeURIComponent(value || "");
+    });
+
+    return params;
+  }
+
   useEffect(() => {
+    var id = "U0217R0029Z";
+    var par = getQueryParams();
+    if ("id" in par) {
+      id = par["id"];
+    }
     axios
       .get(
-        "https://arcade-leaderboard-2quiaraq2-akshatsinghanias-projects-a4067bab.vercel.app/api/v1/history/U079CQWJLCQ"
+        `https://arcade-leaderboard-2quiaraq2-akshatsinghanias-projects-a4067bab.vercel.app/api/v1/history/${id}`
       )
       .then((response) => {
         if (response.data.ok) {
