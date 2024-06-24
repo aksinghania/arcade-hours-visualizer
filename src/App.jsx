@@ -521,11 +521,13 @@ Chart.register(
 );
 
 const SessionHistory = () => {
-  const [sessions, setSessions] = useState(dd.data);
+  const [sessions, setSessions] = useState([]);
 
   useEffect(() => {
     axios
-      .get("http://hackhour.hackclub.com/api/history/U079CQWJLCQ")
+      .get(
+        "https://arcade-leaderboard-2quiaraq2-akshatsinghanias-projects-a4067bab.vercel.app/api/v1/history/U079CQWJLCQ"
+      )
       .then((response) => {
         if (response.data.ok) {
           setSessions(response.data.data);
