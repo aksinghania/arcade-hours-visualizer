@@ -113,6 +113,23 @@ const SessionHistory = () => {
     ],
   };
 
+  const hoursData = {
+    labels: dates,
+    datasets: [
+      {
+        label: "Hours Growth",
+        data: elapsedTimesInHours.map((_, index) =>
+          elapsedTimesInHours
+            .slice(0, index + 1)
+            .reduce((a, b) => parseFloat(a) + parseFloat(b))
+        ),
+        fill: false,
+        borderColor: "rgb(255, 99, 132)",
+        tension: 0.1,
+      },
+    ],
+  };
+
   return (
     <Container sx={{ p: 4 }}>
       <Heading as="h1" sx={{ mb: 4, fontFamily: "Arcade" }}>
@@ -129,6 +146,11 @@ const SessionHistory = () => {
         fontSize={(word) => Math.log2(word.value) * 20}
         data={word_data}
       />
+
+      <Heading as="h1" sx={{ mb: 4, fontFamily: "Arcade" }}>
+        Hours Growth over Time
+      </Heading>
+      <Line data={hoursData} />
     </Container>
   );
 };
