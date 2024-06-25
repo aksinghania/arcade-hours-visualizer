@@ -1,6 +1,140 @@
 /** @jsxImportSource theme-ui */
 import React, { useEffect, useState } from "react";
 
+import { Line } from "react-chartjs-2";
+import axios from "axios";
+import { format, parseISO } from "date-fns";
+import { Box, Heading, Text, Container } from "theme-ui";
+import {
+  Chart,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import WordCloud from "react-d3-cloud";
+
+Chart.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+const SessionHistory = () => {
+  const [sessions, setSessions] = useState([]);
+
+  const [word_data, setWord_Data] = useState([]);
+
+  useEffect(() => {
+    var new_word_data_map = {};
+    sessions.map((v) => {
+      v.work.split(" ").map((ss) => {
+        if (ss in new_word_data_map) {
+          new_word_data_map[ss] += 1;
+        } else {
+          new_word_data_map[ss] = 1;
+        }
+      });
+    });
+
+    var new_word_data = [];
+    Object.keys(new_word_data_map).map((key) => {
+      new_word_data.push({ text: key, value: new_word_data_map[key] });
+    });
+    setWord_Data(new_word_data);
+  }, [sessions]);
+
+  function getQueryParams() {
+    const params = {};
+    const queryString = window.location.search.substring(1);
+    const pairs = queryString.split("&");
+
+    pairs.forEach((pair) => {
+      const [key, value] = pair.split("=");
+      params[decodeURIComponent(key)] = decodeURIComponent(value || "");
+    });
+
+    return params;
+  }
+
+  useEffect(() => {
+    var id = "U0217R0029Z";
+    var par = getQueryParams();
+    if ("id" in par) {
+      id = par["id"];
+    }
+    axios
+      .get(
+        `https://arcade-leaderboard-2quiaraq2-akshatsinghanias-projects-a4067bab.vercel.app/api/v1/history/${id}`
+      )
+      .then((response) => {
+        if (response.data.ok) {
+          setSessions(response.data.data);
+        }
+      })
+      .catch((error) => console.error("Error fetching data:", error));
+  }, []);
+
+  const groupSessionsByDate = (sessions) => {
+    return sessions.reduce((acc, session) => {
+      const date = format(parseISO(session.createdAt), "yyyy-MM-dd");
+      if (!acc[date]) {
+        acc[date] = { totalElapsed: 0, count: 0 };
+      }
+      acc[date].totalElapsed += session.elapsed;
+      acc[date].count += 1;
+      return acc;
+    }, {});
+  };
+
+  const groupedSessions = groupSessionsByDate(sessions);
+  const dates = Object.keys(groupedSessions).sort();
+  const elapsedTimesInHours = dates.map((date) =>
+    (groupedSessions[date].totalElapsed / 60).toFixed(2)
+  );
+
+  const data = {
+    labels: dates,
+    datasets: [
+      {
+        label: "Total Elapsed Time (hours)",
+        data: elapsedTimesInHours,
+        fill: false,
+        borderColor: "rgb(75, 192, 192)",
+        tension: 0.1,
+      },
+    ],
+  };
+
+  return (
+    <Container sx={{ p: 4 }}>
+      <Heading as="h1" sx={{ mb: 4, fontFamily: "Arcade" }}>
+        Hours each day
+      </Heading>
+      <Line data={data} />
+      <Heading as="h1" sx={{ mb: 4, fontFamily: "Arcade" }}>
+        Word Cloud
+      </Heading>
+
+      <WordCloud
+        width={900}
+        height={400}
+        fontSize={(word) => Math.log2(word.value) * 20}
+        data={word_data}
+      />
+    </Container>
+  );
+};
+
+export default SessionHistory;
+
 const dd = {
   ok: true,
   data: [
@@ -494,105 +628,3 @@ const dd = {
     },
   ],
 };
-
-import { Line } from "react-chartjs-2";
-import axios from "axios";
-import { format, parseISO } from "date-fns";
-import { Box, Heading, Text, Container } from "theme-ui";
-import {
-  Chart,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-
-Chart.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
-
-const SessionHistory = () => {
-  const [sessions, setSessions] = useState([]);
-
-  function getQueryParams() {
-    const params = {};
-    const queryString = window.location.search.substring(1);
-    const pairs = queryString.split("&");
-
-    pairs.forEach((pair) => {
-      const [key, value] = pair.split("=");
-      params[decodeURIComponent(key)] = decodeURIComponent(value || "");
-    });
-
-    return params;
-  }
-
-  useEffect(() => {
-    var id = "U0217R0029Z";
-    var par = getQueryParams();
-    if ("id" in par) {
-      id = par["id"];
-    }
-    axios
-      .get(
-        `https://arcade-leaderboard-2quiaraq2-akshatsinghanias-projects-a4067bab.vercel.app/api/v1/history/${id}`
-      )
-      .then((response) => {
-        if (response.data.ok) {
-          setSessions(response.data.data);
-        }
-      })
-      .catch((error) => console.error("Error fetching data:", error));
-  }, []);
-
-  const groupSessionsByDate = (sessions) => {
-    return sessions.reduce((acc, session) => {
-      const date = format(parseISO(session.createdAt), "yyyy-MM-dd");
-      if (!acc[date]) {
-        acc[date] = { totalElapsed: 0, count: 0 };
-      }
-      acc[date].totalElapsed += session.elapsed;
-      acc[date].count += 1;
-      return acc;
-    }, {});
-  };
-
-  const groupedSessions = groupSessionsByDate(sessions);
-  const dates = Object.keys(groupedSessions).sort();
-  const elapsedTimesInHours = dates.map((date) =>
-    (groupedSessions[date].totalElapsed / 60).toFixed(2)
-  );
-
-  const data = {
-    labels: dates,
-    datasets: [
-      {
-        label: "Total Elapsed Time (hours)",
-        data: elapsedTimesInHours,
-        fill: false,
-        borderColor: "rgb(75, 192, 192)",
-        tension: 0.1,
-      },
-    ],
-  };
-
-  return (
-    <Container sx={{ p: 4 }}>
-      <Heading as="h1" sx={{ mb: 4, fontFamily: "Arcade" }}>
-        Hours each day
-      </Heading>
-      <Line data={data} />
-    </Container>
-  );
-};
-
-export default SessionHistory;
