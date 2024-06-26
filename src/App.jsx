@@ -1,9 +1,9 @@
 /** @jsxImportSource theme-ui */
 import React, { useEffect, useState } from "react";
 
-import { Line } from "react-chartjs-2";
+import { Line, Scatter } from "react-chartjs-2";
 import axios from "axios";
-import { format, parseISO } from "date-fns";
+import { format, parse, parseISO } from "date-fns";
 import { Box, Heading, Text, Container } from "theme-ui";
 import {
   Chart,
@@ -130,13 +130,89 @@ const SessionHistory = () => {
     ],
   };
 
+  const scatterData = dates.map((date) => ({
+    label: date,
+    data: groupedSessions[date],
+    backgroundColor: "rgba(255, 99, 132, 0.6)",
+    borderColor: "rgba(255, 99, 132, 1)",
+    borderWidth: 1,
+  }));
+
+  const options = {
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: "Day of the year",
+          color: "#333",
+          font: {
+            size: 18,
+            weight: "bold",
+          },
+        },
+      },
+      y: {
+        title: {
+          display: true,
+          text: "Hour of the day",
+          color: "#333",
+          font: {
+            size: 18,
+            weight: "bold",
+          },
+        },
+        beginAtZero: true,
+      },
+    },
+    plugins: {
+      legend: {
+        display: true,
+        position: "top",
+      },
+    },
+  };
+  const [dataScatter, setDataScatter] = useState({
+    datasets: [
+      {
+        label: "Sessions Data",
+        data: sessions.map((session) => ({
+          x: format(parseISO(session.createdAt), "yyyy-MM-dd"),
+          y: session.elapsed,
+        })),
+        backgroundColor: "rgba(255, 99, 132, 1)",
+      },
+    ],
+  });
+  useEffect(() => {
+    sessions.map((session) => {
+      var dattt = {
+        x: parseISO(session.createdAt).getHours(),
+        y: parseISO(session.createdAt).getDate(),
+      };
+      console.log(parseISO(session.createdAt), dattt);
+    }),
+      setDataScatter({
+        datasets: [
+          {
+            label: "Sessions Data",
+            data: sessions.map((session) => ({
+              x: parseISO(session.createdAt).getDate(),
+              y: parseISO(session.createdAt).getHours(),
+            })),
+            backgroundColor: "rgba(255, 99, 132, 1)",
+          },
+        ],
+      });
+    console.log(dataScatter.datasets[0].data);
+  }, [sessions]);
+
   return (
     <Container sx={{ p: 4 }}>
       <Heading as="h1" sx={{ mb: 4, fontFamily: "Arcade" }}>
         Hours each day
       </Heading>
       <Line data={data} />
-      <Heading as="h1" sx={{ mb: 4, fontFamily: "Arcade" }}>
+      <Heading as="h1" sx={{ mt: 4, fontFamily: "Arcade" }}>
         Word Cloud
       </Heading>
 
@@ -151,6 +227,10 @@ const SessionHistory = () => {
         Hours Growth over Time
       </Heading>
       <Line data={hoursData} />
+      <Heading as="h1" sx={{ mt: 4, fontFamily: "Arcade" }}>
+        See What time of the day are you hacking the most
+      </Heading>
+      <Scatter options={options} data={dataScatter} />
     </Container>
   );
 };
